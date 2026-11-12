@@ -1,0 +1,33 @@
+node_modules/
+dist/
+# Copied from node_modules by scripts/copy-ocr-assets.mjs
+public/ocr/
+
+# Never commit real financial data. Only synthetic files in tests/fixtures are allowed.
+*.csv
+*.pdf
+*.xls
+*.xlsx
+*.ofx
+*.qfx
+*.jpg
+*.jpeg
+*.png
+*.heic
+statements/
+data/
+exports/
+loonie-backup*.json
+loonie-rules*.json
+*.loonie
+!tests/fixtures/*.csv
+!tests/fixtures/*.pdf
+
+.DS_Store
+
+# Kept on this Mac only. The public repository holds just the app.
+# These hold personal notes, goals and the design files.
+spending-tracker-brief.md
+BRIEF.md
+HANDOFF.md
+design/

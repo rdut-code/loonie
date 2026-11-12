@@ -1,0 +1,68 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 5 0 R /Resources << /Font << /F1 4 0 R >> >> >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Length 1794 >>
+stream
+BT /F1 10 Tf 50.00 740 Td (Scotiabank chequing account \(synthetic sample, not a real statement\)) Tj ET
+BT /F1 10 Tf 50.00 720 Td (Statement Period: Oct 1, 2026 to Oct 31, 2026) Tj ET
+BT /F1 10 Tf 50.00 690 Td (Date) Tj ET
+BT /F1 10 Tf 110.00 690 Td (Description) Tj ET
+BT /F1 10 Tf 338.84 690 Td (Withdrawals) Tj ET
+BT /F1 10 Tf 435.52 690 Td (Deposits) Tj ET
+BT /F1 10 Tf 521.08 690 Td (Balance) Tj ET
+BT /F1 10 Tf 50.00 670 Td (Oct 1) Tj ET
+BT /F1 10 Tf 110.00 670 Td (Opening Balance) Tj ET
+BT /F1 10 Tf 521.08 670 Td (5,000.00) Tj ET
+BT /F1 10 Tf 50.00 652 Td (Oct 1) Tj ET
+BT /F1 10 Tf 110.00 652 Td (Misc payment) Tj ET
+BT /F1 10 Tf 361.08 652 Td (2,350.00) Tj ET
+BT /F1 10 Tf 521.08 652 Td (2,650.00) Tj ET
+BT /F1 10 Tf 110.00 640 Td (SAMPLE PROPERTY MGMT) Tj ET
+BT /F1 10 Tf 50.00 622 Td (Oct 5) Tj ET
+BT /F1 10 Tf 110.00 622 Td (Bill payment) Tj ET
+BT /F1 10 Tf 361.08 622 Td (1,250.00) Tj ET
+BT /F1 10 Tf 521.08 622 Td (1,400.00) Tj ET
+BT /F1 10 Tf 110.00 610 Td (AMEX) Tj ET
+BT /F1 10 Tf 50.00 592 Td (Oct 12) Tj ET
+BT /F1 10 Tf 110.00 592 Td (Interac e-Transfer sent) Tj ET
+BT /F1 10 Tf 369.42 592 Td (360.00) Tj ET
+BT /F1 10 Tf 521.08 592 Td (1,040.00) Tj ET
+BT /F1 10 Tf 50.00 574 Td (Oct 15) Tj ET
+BT /F1 10 Tf 110.00 574 Td (Payroll deposit) Tj ET
+BT /F1 10 Tf 441.08 574 Td (4,200.00) Tj ET
+BT /F1 10 Tf 521.08 574 Td (5,240.00) Tj ET
+BT /F1 10 Tf 110.00 562 Td (SAMPLE EMPLOYER INC) Tj ET
+BT /F1 10 Tf 50.00 544 Td (Oct 22) Tj ET
+BT /F1 10 Tf 110.00 544 Td (Point of sale purchase) Tj ET
+BT /F1 10 Tf 374.98 544 Td (63.10) Tj ET
+BT /F1 10 Tf 521.08 544 Td (5,176.90) Tj ET
+BT /F1 10 Tf 110.00 532 Td (FPOS SAMPLE GAS BAR TORONTO ON) Tj ET
+BT /F1 10 Tf 50.00 504 Td (Oct 31) Tj ET
+BT /F1 10 Tf 110.00 504 Td (Closing Balance) Tj ET
+BT /F1 10 Tf 521.08 504 Td (5,176.90) Tj ET
+endstream
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000000338 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+2184
+%%EOF

@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "loonie",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": [
+        "-c",
+        "PATH=\"$HOME/.local/node/bin:$PATH\" npm run dev"
+      ],
+      "port": 5173
+    },
+    {
+      "name": "loonie-built",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": [
+        "-c",
+        "PATH=\"$HOME/.local/node/bin:$PATH\" npm run preview -- --port 4173 --strictPort"
+      ],
+      "port": 4173
+    }
+  ]
+}

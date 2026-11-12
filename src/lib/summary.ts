@@ -16,6 +16,32 @@ export function totalsFor(data: AppData, month: string, who: PersonFilter): Reco
   return totals;
 }
 
+/**
+ * What a category usually comes to: the average of its last few months
+ * (up to three) in which it had any spending at all.
+ *
+ * Months where the category is empty are left out. An empty month nearly
+ * always means that account's statement was not uploaded for that month,
+ * and counting it as zero would halve the "usual" for something like rent.
+ */
+export function usualFor(
+  data: AppData,
+  month: string,
+  categoryId: string,
+  who: PersonFilter = 'all',
+): { cents: number; months: string[] } | null {
+  const used: string[] = [];
+  let sum = 0;
+  for (const m of earlierMonths(data, month, 12)) {
+    const cents = totalsFor(data, m, who)[categoryId] ?? 0;
+    if (cents <= 0) continue;
+    used.push(m);
+    sum += cents;
+    if (used.length === 3) break;
+  }
+  return used.length ? { cents: Math.round(sum / used.length), months: used } : null;
+}
+
 /** Up to three earlier months that have data, newest first. */
 export function earlierMonths(data: AppData, month: string, limit = 3): string[] {
   return Object.keys(data.monthTotals)
@@ -29,7 +55,7 @@ export interface CategoryLine {
   category: Category;
   cents: number;
   lines: number;
-  /** Average of the earlier months, or null in the first month. */
+  /** What this category usually comes to (see usualFor), or null when there is nothing to compare with. */
   usual: number | null;
 }
 
@@ -49,7 +75,6 @@ export interface MonthSummary {
 
 export function monthSummary(data: AppData, month: string, who: PersonFilter): MonthSummary {
   const totals = totalsFor(data, month, who);
-  const earlier = earlierMonths(data, month).map((m) => totalsFor(data, m, who));
   const theirs = who === 'all' ? null : new Set(data.accounts.filter((a) => a.owner === who).map((a) => a.id));
   const rows = data.txns.filter((t) => t.date.startsWith(month) && (!theirs || theirs.has(t.accountId)));
 
@@ -62,9 +87,7 @@ export function monthSummary(data: AppData, month: string, who: PersonFilter): M
     const lines = rows.filter((t) => t.categoryId === category.id).length;
     if (category.group === 'fixed') fixed += cents;
     else everyday += cents;
-    const usual = earlier.length
-      ? Math.round(earlier.reduce((sum, t) => sum + (t[category.id] ?? 0), 0) / earlier.length)
-      : null;
+    const usual = usualFor(data, month, category.id, who)?.cents ?? null;
     if (cents !== 0 || lines > 0 || (usual ?? 0) > 0) categories.push({ category, cents, lines, usual });
   }
 

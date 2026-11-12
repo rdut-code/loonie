@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { addStatement, assignMerchant, emptyData } from '../src/lib/actions';
 import { checksFor, dismissCheck } from '../src/lib/checks';
-import { monthSummary, trendOf } from '../src/lib/summary';
+import { monthSummary, trendOf, usualFor } from '../src/lib/summary';
 import type { Account, AppData, RawLine } from '../src/lib/types';
 
 // All merchants and amounts are invented.
@@ -78,6 +78,36 @@ describe('monthly summary', () => {
     expect(trendOf(groceries)).toEqual({ kind: 'up', byCents: 10000 });
     const sept = monthSummary(two, '2026-09', 'all');
     expect(sept.categories.find((c) => c.category.id === 'groceries')!.usual).toBeNull();
+  });
+  it('leaves empty months out of "usually", so a missing statement does not halve the rent', () => {
+    // September has card spending but no chequing statement, so no rent was seen that month.
+    const d = build(
+      [
+        [mine, [line('2026-09-03', 'LOBLAWS', 200)]],
+        [bank, [line('2026-10-01', 'SAMPLE LANDLORD', 2302), line('2026-11-01', 'SAMPLE LANDLORD', 2302)]],
+        [mine, [line('2026-10-03', 'LOBLAWS', 220), line('2026-11-03', 'LOBLAWS', 210)]],
+      ],
+      { ...RULES, 'SAMPLE LANDLORD': 'rent' },
+    );
+    const nov = monthSummary(d, '2026-11', 'all');
+    const rent = nov.categories.find((c) => c.category.id === 'rent')!;
+    expect(rent.usual).toBe(230200);
+    expect(trendOf(rent)?.kind).toBe('usual');
+    // Groceries appeared in both earlier months, so both count.
+    expect(nov.categories.find((c) => c.category.id === 'groceries')!.usual).toBe(21000);
+    expect(usualFor(d, '2026-11', 'rent')).toEqual({ cents: 230200, months: ['2026-10'] });
+    expect(usualFor(d, '2026-11', 'travel')).toBeNull();
+  });
+  it('uses the last three months that had spending, not just the last three months', () => {
+    const d = build(
+      [[mine, [
+        line('2026-06-10', 'SAMPLE BISTRO', 100), line('2026-07-10', 'SAMPLE BISTRO', 200),
+        line('2026-08-10', 'LOBLAWS', 50), line('2026-09-10', 'SAMPLE BISTRO', 300),
+        line('2026-10-10', 'SAMPLE BISTRO', 400), line('2026-11-10', 'SAMPLE BISTRO', 10),
+      ]]],
+      RULES,
+    );
+    expect(usualFor(d, '2026-11', 'dining')).toEqual({ cents: 30000, months: ['2026-10', '2026-09', '2026-07'] });
   });
   it('calls small wobbles usual', () => {
     const cat = emptyData().categories[0];

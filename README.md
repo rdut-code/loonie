@@ -101,7 +101,7 @@ The app also asks the browser to keep its storage (`navigator.storage.persist`),
 
 ## The monthly summary and checks
 
-Home shows what was spent in the month, split into fixed and everyday, against the money that came into the bank account. Each category is compared with its usual amount (the average of up to three earlier months). The Household / person filter counts only the accounts that person owns; shared accounts appear under Household only.
+Home shows what was spent in the month, split into fixed and everyday, against the money that came into the bank account. Each category is compared with its usual amount: the average of its last three months that had any spending in it. Empty months are left out, because an empty month nearly always means that account's statement was not uploaded. The Household / person filter counts only the accounts that person owns; shared accounts appear under Household only.
 
 The "worth a look" list holds four kinds of check, all plain arithmetic on rows in this browser:
 

@@ -7,6 +7,22 @@ import { formatDollars, monthName } from '../lib/money';
 import { monthSummary, trendOf, type PersonFilter } from '../lib/summary';
 import { useStore } from '../store';
 
+/** True on phone-sized screens, where long lists are folded to their top few rows. */
+function useNarrow(): boolean {
+  const query = '(max-width: 760px)';
+  const [narrow, setNarrow] = useState(() => window.matchMedia?.(query).matches ?? false);
+  useEffect(() => {
+    const media = window.matchMedia?.(query);
+    if (!media) return;
+    const onChange = () => setNarrow(media.matches);
+    media.addEventListener('change', onChange);
+    return () => media.removeEventListener('change', onChange);
+  }, []);
+  return narrow;
+}
+
+const FOLDED_ROWS = 3;
+
 /** Counts a number up from zero, as in the design. Jumps straight to the value when motion is reduced. */
 function useCountUp(target: number): number {
   const [value, setValue] = useState(target);
@@ -51,6 +67,9 @@ export function Home({ go }: { go: (screen: Screen) => void }) {
   const [leaving, setLeaving] = useState<string[]>([]);
   /** True once the owner has cleared the whole list this visit, to show a small celebration. */
   const [cleared, setCleared] = useState(false);
+  const narrow = useNarrow();
+  /** Which category groups the owner has opened up fully on a phone. */
+  const [expanded, setExpanded] = useState<string[]>([]);
   const month = picked && months.includes(picked) ? picked : months[0];
 
   const summary = month ? monthSummary(data, month, who) : null;
@@ -115,12 +134,68 @@ export function Home({ go }: { go: (screen: Screen) => void }) {
     window.setTimeout(finish, 620);
   };
 
-  const everyday = summary.categories.filter((c) => c.category.group === 'everyday');
-  const fixed = summary.categories.filter((c) => c.category.group === 'fixed');
-  const biggest = Math.max(1, ...summary.categories.map((c) => Math.max(c.cents, c.usual ?? 0)));
+  // Biggest first, so the folded view on a phone shows what matters most.
+  const bySize = (a: (typeof summary.categories)[number], b: (typeof summary.categories)[number]) => b.cents - a.cents;
+  const everyday = summary.categories.filter((c) => c.category.group === 'everyday').sort(bySize);
+  const fixed = summary.categories.filter((c) => c.category.group === 'fixed').sort(bySize);
 
-  const renderRows = (lines: typeof everyday, offset: number) => (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))', gap: '26px 32px' }}>
+  const rowGrid = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))', gap: '26px 32px' } as const;
+
+  /** A titled group of categories. On a phone it shows its top few and folds the rest away. */
+  const renderGroup = (id: string, title: string, lines: typeof everyday, totalCents: number, offset: number) => {
+    const folds = narrow && lines.length > FOLDED_ROWS;
+    const open = !folds || expanded.includes(id);
+    const top = folds ? lines.slice(0, FOLDED_ROWS) : lines;
+    const rest = folds ? lines.slice(FOLDED_ROWS) : [];
+    // Bars are sized within their own group, so rent does not flatten every everyday bar.
+    const biggest = Math.max(1, ...lines.map((c) => Math.max(c.cents, c.usual ?? 0)));
+    const toggle = () => setExpanded((list) => (open ? list.filter((x) => x !== id) : [...list, id]));
+    const heading = (
+      <>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h2 className="d" style={{ fontSize: 28, fontWeight: 600 }}>{title}</h2>
+          <div className="muted num" style={{ fontSize: 14, paddingTop: 2 }}>
+            {lines.length} {lines.length === 1 ? 'category' : 'categories'}
+          </div>
+        </div>
+        <div className="d num" style={{ fontSize: 24, fontWeight: 600 }}>{formatDollars(totalCents)}</div>
+      </>
+    );
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+        {folds ? (
+          <button className={open ? 'sechead open' : 'sechead'} aria-expanded={open} onClick={toggle}>
+            {heading}
+            <span className="chev" style={{ display: 'flex' }}><Icon path={ICON.chevron} size={20} /></span>
+          </button>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>{heading}</div>
+        )}
+        {lines.length === 0 ? (
+          <div className="muted" style={{ fontSize: 15 }}>Nothing here for {monthWord}.</div>
+        ) : (
+          <div>
+            {renderRows(top, offset, biggest)}
+            {rest.length > 0 && (
+              <>
+                <div className={open ? 'fold' : 'fold shut'}>
+                  <div className="in" inert={!open}>
+                    <div style={{ paddingTop: 26 }}>{renderRows(rest, offset + top.length, biggest)}</div>
+                  </div>
+                </div>
+                <button className="btn sm quiet" style={{ marginTop: 14, padding: '0 14px' }} onClick={toggle}>
+                  {open ? 'Show fewer' : `Show all ${lines.length}`}
+                </button>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderRows = (lines: typeof everyday, offset: number, biggest: number) => (
+    <div style={rowGrid}>
       {lines.map((line, i) => {
         const trend = trendOf(line);
         const up = trend?.kind === 'up';
@@ -298,24 +373,20 @@ export function Home({ go }: { go: (screen: Screen) => void }) {
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, alignItems: 'flex-start' }}>
         <section className="card" style={{ flex: '999 1 560px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 24, animationDelay: '80ms' }}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-            <h2 className="d" style={{ fontSize: 28, fontWeight: 600 }}>Everyday spending</h2>
-            {showFilter && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }} role="group" aria-label="Filter by person">
-                {people.map(([id, label]) => (
-                  <button key={id} className={who === id ? 'chip on' : 'chip'} aria-pressed={who === id} onClick={() => setWho(id)}>
-                    {label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          {everyday.length > 0 ? renderRows(everyday, 0) : <div className="muted" style={{ fontSize: 15 }}>Nothing here for {monthWord}.</div>}
+          {showFilter && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }} role="group" aria-label="Filter by person">
+              {people.map(([id, label]) => (
+                <button key={id} className={who === id ? 'chip on' : 'chip'} aria-pressed={who === id} onClick={() => setWho(id)}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+          {renderGroup('everyday', 'Everyday spending', everyday, summary.everyday, 0)}
           {fixed.length > 0 && (
-            <>
-              <h2 className="d" style={{ fontSize: 28, fontWeight: 600, paddingTop: 8, borderTop: '1px solid var(--line)', marginTop: 4, paddingBlockStart: 24 }}>Fixed costs</h2>
-              {renderRows(fixed, everyday.length)}
-            </>
+            <div style={{ borderTop: '1px solid var(--line)', paddingTop: 24 }}>
+              {renderGroup('fixed', 'Fixed costs', fixed, summary.fixed, everyday.length)}
+            </div>
           )}
           <button className="btn quiet" style={{ alignSelf: 'flex-start', padding: '0 14px' }} onClick={() => go('sorted')}>
             See every line

@@ -3,7 +3,7 @@
 
 import { daysBetween, formatCents, formatDollars, monthName, shortDate } from './money';
 import { isGenericKey } from './normalize';
-import { earlierMonths } from './summary';
+import { earlierMonths, usualFor } from './summary';
 import { INCOME, NOT_SPENDING, type AppData, type Txn } from './types';
 
 export type CheckKind = 'changed' | 'duplicate' | 'jump' | 'new';
@@ -121,24 +121,25 @@ function newStanding(data: AppData, month: string, earlier: string[]): Check[] {
   return checks;
 }
 
-/** A category well above its usual: at least $50 and 25% over the average of earlier months. */
-function categoryJumps(data: AppData, month: string, earlier: string[]): Check[] {
-  if (earlier.length === 0) return [];
+/** A category well above its usual: at least $50 and 25% over (see usualFor for what "usual" means). */
+function categoryJumps(data: AppData, month: string): Check[] {
   const totals = data.monthTotals[month] ?? {};
   const checks: Check[] = [];
   for (const category of data.categories) {
     if (category.group === 'system') continue;
     const now = totals[category.id] ?? 0;
-    const usual = Math.round(earlier.reduce((sum, m) => sum + (data.monthTotals[m]?.[category.id] ?? 0), 0) / earlier.length);
+    const basis = usualFor(data, month, category.id);
+    if (!basis) continue;
+    const usual = basis.cents;
     const diff = now - usual;
-    if (usual <= 0 || diff < 5000 || diff < usual * 0.25) continue;
-    const versus = earlier.length === 1 ? monthName(earlier[0]).split(' ')[0] : `your usual ${formatDollars(usual)}`;
+    if (diff < 5000 || diff < usual * 0.25) continue;
+    const versus = basis.months.length === 1 ? monthName(basis.months[0]).split(' ')[0] : `your usual ${formatDollars(usual)}`;
     checks.push({
       id: `jump:${category.id}:${month}`,
       kind: 'jump',
       title: `${category.name} ran ${formatDollars(diff)} higher`,
       detail:
-        earlier.length === 1
+        basis.months.length === 1
           ? `${formatDollars(now)} this month, ${formatDollars(usual)} in ${versus}.`
           : `${formatDollars(now)} this month against ${versus}.`,
       categoryId: category.id,
@@ -156,7 +157,7 @@ export function checksFor(data: AppData, month: string): Check[] {
   const rows = data.txns.filter((t) => t.date.startsWith(month));
   const changed = changedRecurring(data, month, earlier);
   // When one bill going up explains most of a category's rise, the bill is the news. Say it once.
-  const jumps = categoryJumps(data, month, earlier).filter((jump) => {
+  const jumps = categoryJumps(data, month).filter((jump) => {
     const explained = changed
       .filter((c) => c.categoryId === jump.categoryId && (c.diffCents ?? 0) > 0)
       .reduce((sum, c) => sum + (c.diffCents ?? 0), 0);
